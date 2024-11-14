@@ -10,7 +10,6 @@ import api.Cell;
 import api.Direction;
 import api.Move;
 
-
 /**
  * Represents a board in the Block Slider game. A board contains a 2D grid of
  * cells and a list of blocks that slide over the cells.
@@ -20,6 +19,7 @@ public class Board {
 	private int grabbedCol;
 	private Block grabbedBlock;
 	private Cell grabbedCell;
+	private int moveCount;
 	/**
 	 * 2D array of cells, the indexes signify (row, column) with (0, 0) representing
 	 * the upper-left cornner of the board.
@@ -48,7 +48,22 @@ public class Board {
 	 *               should be placed on the board
 	 */
 	public Board(Cell[][] grid, ArrayList<Block> blocks) {
-		// TODO
+		this.grid = grid;
+		this.blocks = blocks;
+
+		for (Block block : blocks) {
+			int row = block.getFirstRow();
+			int col = block.getFirstCol();
+
+			for (int i = 0; i < block.getLength(); i++) {
+				if (block.getOrientation() == HORIZONTAL) {
+					this.grid[row][col + i].setBlock(block);
+				} else if (block.getOrientation() == VERTICAL) {
+					this.grid[row + i][col].setBlock(block);
+				}
+			}
+		}
+
 	}
 
 	/**
@@ -74,7 +89,7 @@ public class Board {
 	 */
 	public void grabBlockAtCell(int row, int col) {
 		for (Block block : blocks) {
-			if(block.getOrientation() == HORIZONTAL)
+			if (block.getOrientation() == HORIZONTAL)
 				for (int i = 0; i < block.getLength(); i++) {
 					if (block.getFirstRow() == row && block.getFirstCol() + i == col) {
 						grabbedBlock = block;
@@ -93,7 +108,7 @@ public class Board {
 					}
 				}
 		}
-		
+
 	}
 
 	/**
@@ -101,8 +116,9 @@ public class Board {
 	 */
 	public void releaseBlock() {
 		grabbedBlock = null;
-		grabbedRow -= 1;
-		grabbedCol -= 1;
+		// grabbedRow -= 1;
+		// grabbedCol -= 1;
+		grabbedCell = null;
 	}
 
 	/**
@@ -111,7 +127,7 @@ public class Board {
 	 * @return the current block
 	 */
 	public Block getGrabbedBlock() {
-		
+
 		return grabbedBlock;
 	}
 
@@ -140,11 +156,14 @@ public class Board {
 		if (row < 0 || row >= grid.length || col < 0 || col >= grid[0].length) {
 			return false;
 		}
-		else {
-			Cell cell = grid[row][col];
-			return true;
+		Cell cell = grid[row][col];
+
+		if (cell.isFloor() || cell.isExit()) {
+			if (cell.getBlock() == null) {
+				return true;
+			}
 		}
-		
+		return false;
 	}
 
 	/**
@@ -153,8 +172,8 @@ public class Board {
 	 * @return the number of moves
 	 */
 	public int getMoveCount() {
-		// TODO
-		return 0;
+
+		return moveCount;
 	}
 
 	/**
@@ -163,8 +182,8 @@ public class Board {
 	 * @return number of rows
 	 */
 	public int getRowSize() {
-		// TODO
-		return 0;
+
+		return grid.length;
 	}
 
 	/**
@@ -173,8 +192,8 @@ public class Board {
 	 * @return number of columns
 	 */
 	public int getColSize() {
-		// TODO
-		return 0;
+
+		return grid[0].length;
 	}
 
 	/**
@@ -185,8 +204,8 @@ public class Board {
 	 * @return the cell at the specified location
 	 */
 	public Cell getCell(int row, int col) {
-		// TODO
-		return null;
+
+		return grid[row][col];
 	}
 
 	/**
@@ -195,8 +214,8 @@ public class Board {
 	 * @return a list of all blocks
 	 */
 	public ArrayList<Block> getBlocks() {
-		// TODO
-		return null;
+
+		return blocks;
 	}
 
 	/**
@@ -206,7 +225,26 @@ public class Board {
 	 * @return true if the game is over
 	 */
 	public boolean isGameOver() {
-		// TODO
+		for (Block block : blocks) {
+			if (block.getOrientation() == HORIZONTAL) {
+				for (int i = 0; i >= grid.length; i++) {
+					int row = block.getFirstRow() + i;
+					int col = block.getFirstCol();
+					if (grid[row][col].isExit()) {
+						return true;
+					}
+				}
+			}
+			else if (block.getOrientation() == VERTICAL) {
+				for (int i = 0; i >= grid[0].length; i++) {
+					int row = block.getFirstRow() + i;
+					int col = block.getFirstCol();
+					if (grid[row][col].isExit()) {
+						return true;
+					}
+				}
+			}
+		}
 		return false;
 	}
 
@@ -238,27 +276,25 @@ public class Board {
 	 * @param dir the direction to move
 	 */
 	public void moveGrabbedBlock(Direction dir) {
-		if (grabbedBlock == null) {
+		if (grabbedBlock == null || isGameOver()) {
 			return;
 		}
 		if (grabbedBlock.getOrientation() == HORIZONTAL) {
 			if (dir == RIGHT) {
 				grabbedBlock.setFirstCol(grabbedBlock.getFirstCol() + 1);
-			}
-			else {
+			} else {
 				grabbedBlock.setFirstCol(grabbedBlock.getFirstCol() - 1);
-			
+
 			}
-		if (grabbedBlock.getOrientation() == VERTICAL) {
+			if (grabbedBlock.getOrientation() == VERTICAL) {
 				if (dir == DOWN) {
 					grabbedBlock.setFirstRow(grabbedBlock.getFirstRow() + 1);
-				}
-				else {
+				} else {
 					grabbedBlock.setFirstRow(grabbedBlock.getFirstRow() - 1);
-				
+
 				}
-		}
-		
+			}
+
 		}
 	}
 
