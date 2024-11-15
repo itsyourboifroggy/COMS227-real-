@@ -98,7 +98,7 @@ public class Board {
 						return;
 					}
 				}
-			else if (block.getOrientation() == HORIZONTAL)
+			else if (block.getOrientation() == VERTICAL)
 				for (int i = 0; i < block.getLength(); i++) {
 					if (block.getFirstRow() + i == row && block.getFirstCol() == col) {
 						grabbedBlock = block;
@@ -234,8 +234,7 @@ public class Board {
 						return true;
 					}
 				}
-			}
-			else if (block.getOrientation() == VERTICAL) {
+			} else if (block.getOrientation() == VERTICAL) {
 				for (int i = 0; i >= grid[0].length; i++) {
 					int row = block.getFirstRow() + i;
 					int col = block.getFirstCol();
@@ -279,24 +278,30 @@ public class Board {
 		if (grabbedBlock == null || isGameOver()) {
 			return;
 		}
+		 int newFirstRow = grabbedBlock.getFirstRow(); 
+		 int newFirstCol = grabbedBlock.getFirstCol();
 		if (grabbedBlock.getOrientation() == HORIZONTAL) {
 			if (dir == RIGHT) {
 				grabbedBlock.setFirstCol(grabbedBlock.getFirstCol() + 1);
-			} else {
+			} 
+			else if (dir == LEFT){
 				grabbedBlock.setFirstCol(grabbedBlock.getFirstCol() - 1);
-
+				
 			}
-			if (grabbedBlock.getOrientation() == VERTICAL) {
-				if (dir == DOWN) {
-					grabbedBlock.setFirstRow(grabbedBlock.getFirstRow() + 1);
-				} else {
-					grabbedBlock.setFirstRow(grabbedBlock.getFirstRow() - 1);
-
-				}
-			}
-
 		}
-	}
+		else if (grabbedBlock.getOrientation() == VERTICAL) {
+				if (dir == DOWN) {
+					grabbedBlock.setFirstRow(grabbedBlock.getFirstRow() - 1);
+				} 
+				else if (dir == UP){
+					grabbedBlock.setFirstRow(grabbedBlock.getFirstRow() + 1);
+							
+				}
+		
+			}
+		
+		}
+	
 
 	/**
 	 * Resets the state of the game back to the start, which includes the move
@@ -306,7 +311,32 @@ public class Board {
 	 * or set null if no block is located over the cell.
 	 */
 	public void reset() {
-		// TODO
+		moveCount = 0;
+		moveHistory.clear();
+		for (int i = 0; i < grid.length; i++) {
+			for (int j = 0; j < grid[i].length; j++)
+				grid[i][j].setBlock(null);;
+		}
+		for (Block block : blocks) {
+			block.reset();
+		}
+		for (Block block : blocks) {
+			int row = block.getFirstRow();
+			int col = block.getFirstCol();
+			if (block.getOrientation() == HORIZONTAL) {
+				for (int i = 0; i < block.getLength(); i++) {
+					grid[row][col + i].setBlock(block);
+
+				}
+			}
+
+			else if (block.getOrientation() == VERTICAL) {
+				for (int i = 0; i < block.getLength(); i++) {
+					grid[row + i][col].setBlock(block);
+				}
+			}
+		}
+
 	}
 
 	/**
@@ -316,8 +346,31 @@ public class Board {
 	 * @return a list of legal moves
 	 */
 	public ArrayList<Move> getAllPossibleMoves() {
-		// TODO
-		return null;
+		ArrayList<Move> possibleMoves = new ArrayList<>();
+		if (isGameOver()) {
+			return possibleMoves;
+		}
+		for (Block block : blocks) {
+			int row = block.getFirstRow();
+			int col = block.getFirstCol();
+			if (block.getOrientation() == HORIZONTAL) {
+				if (canPlaceBlock(row, col - 1)) {
+					possibleMoves.add(new Move(block, LEFT));
+				}
+				if (canPlaceBlock(row, col + 1)) {
+					possibleMoves.add(new Move(block, RIGHT));
+				} else if (block.getOrientation() == VERTICAL) {
+					if (canPlaceBlock(row - 1, col)) {
+						possibleMoves.add(new Move(block, UP));
+					}
+					if (canPlaceBlock(row + 1, col)) {
+						possibleMoves.add(new Move(block, DOWN));
+					}
+				}
+			}
+		}
+
+		return possibleMoves;
 	}
 
 	/**
@@ -327,8 +380,8 @@ public class Board {
 	 * @return a list of moves performed to get to the current position
 	 */
 	public ArrayList<Move> getMoveHistory() {
-		// TODO
-		return null;
+
+		return moveHistory;
 	}
 
 	/**
