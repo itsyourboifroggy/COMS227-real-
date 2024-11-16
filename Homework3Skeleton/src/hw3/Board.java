@@ -7,6 +7,7 @@ import static api.Orientation.*;
 import java.util.ArrayList;
 
 import api.Cell;
+import api.CellType;
 import api.Direction;
 import api.Move;
 
@@ -50,12 +51,12 @@ public class Board {
 	public Board(Cell[][] grid, ArrayList<Block> blocks) {
 		this.grid = grid;
 		this.blocks = blocks;
-
+		this.moveHistory = new ArrayList<>();
 		for (Block block : blocks) {
 			int row = block.getFirstRow();
 			int col = block.getFirstCol();
 
-			for (int i = 0; i < block.getLength(); i++) {
+			for (int i = 0; i < block.getLength(); i++) { // goes through each direction to see if they have blocks
 				if (block.getOrientation() == HORIZONTAL) {
 					this.grid[row][col + i].setBlock(block);
 				} else if (block.getOrientation() == VERTICAL) {
@@ -87,7 +88,7 @@ public class Board {
 	 * @param row row to grab the block from
 	 * @param col column to grab the block from
 	 */
-	public void grabBlockAtCell(int row, int col) {
+	public void grabBlockAtCell(int row, int col) { // grabs the block by iterating through each on then updates the grabbedBlock
 		for (Block block : blocks) {
 			if (block.getOrientation() == HORIZONTAL)
 				for (int i = 0; i < block.getLength(); i++) {
@@ -114,7 +115,7 @@ public class Board {
 	/**
 	 * Set the currently grabbed block to null.
 	 */
-	public void releaseBlock() {
+	public void releaseBlock() { // resets grabbed objects
 		grabbedBlock = null;
 		// grabbedRow -= 1;
 		// grabbedCol -= 1;
@@ -136,7 +137,7 @@ public class Board {
 	 * 
 	 * @return the current cell
 	 */
-	public Cell getGrabbedCell() {
+	public Cell getGrabbedCell() { // gets the currently grabbed cell 
 		if (grabbedCell == null) {
 			return grid[grabbedRow][grabbedCol];
 		}
@@ -152,19 +153,28 @@ public class Board {
 	 * @param col column location of the cell
 	 * @return true if the cell is available for a block, otherwise false
 	 */
-	public boolean canPlaceBlock(int row, int col) {
-		if (row < 0 || row >= grid.length || col < 0 || col >= grid[0].length) {
-			return false;
-		}
-		Cell cell = grid[row][col];
+	public boolean canPlaceBlock(int row, int col) { // checks if placing block is possible 
+	    if (col < 0 || col >= grid[0].length) {
+	        
+	        return false;
+	    }
+	    if (row < 0 || row >= grid.length) {
+	        
+	        return false;
+	    }
+	    Cell cell = grid[row][col];
 
-		if (cell.isFloor() || cell.isExit()) {
-			if (cell.getBlock() == null) {
-				return true;
-			}
-		}
-		return false;
+	    boolean isFloor = cell.isFloor();
+	    boolean isExit = cell.isExit();
+	    boolean hasBlock = cell.getBlock() != null;
+	    boolean canPlace = (isFloor || isExit) && !hasBlock;
+
+	    
+	    
+	    return canPlace;
 	}
+
+
 
 	/**
 	 * Returns the number of moves made so far in the game.
@@ -224,26 +234,32 @@ public class Board {
 	 * 
 	 * @return true if the game is over
 	 */
-	public boolean isGameOver() {
-		for (Block block : blocks) {
-			if (block.getOrientation() == HORIZONTAL) {
-				for (int i = 0; i >= grid.length; i++) {
-					int row = block.getFirstRow() + i;
-					int col = block.getFirstCol();
-					if (grid[row][col].isExit()) {
-						return true;
-					}
+	public boolean isGameOver() { // checks if the game is over which will return based on that
+
+		Block primaryBlock = blocks.get(0);
+
+		if (primaryBlock.getOrientation() == HORIZONTAL) {
+
+			for (int i = 0; i < primaryBlock.getLength(); i++) {
+				int row = primaryBlock.getFirstRow();
+				int col = primaryBlock.getFirstCol() + i;
+				if (grid[row][col].isExit()) {
+
+					return true;
 				}
-			} else if (block.getOrientation() == VERTICAL) {
-				for (int i = 0; i >= grid[0].length; i++) {
-					int row = block.getFirstRow() + i;
-					int col = block.getFirstCol();
-					if (grid[row][col].isExit()) {
-						return true;
-					}
+			}
+		} else if (primaryBlock.getOrientation() == VERTICAL) {
+
+			for (int i = 0; i < primaryBlock.getLength(); i++) {
+				int row = primaryBlock.getFirstRow() + i;
+				int col = primaryBlock.getFirstCol();
+				if (grid[row][col].isExit()) {
+
+					return true;
 				}
 			}
 		}
+
 		return false;
 	}
 
@@ -274,34 +290,51 @@ public class Board {
 	 * 
 	 * @param dir the direction to move
 	 */
-	public void moveGrabbedBlock(Direction dir) {
-		if (grabbedBlock == null || isGameOver()) {
-			return;
-		}
-		 int newFirstRow = grabbedBlock.getFirstRow(); 
-		 int newFirstCol = grabbedBlock.getFirstCol();
-		if (grabbedBlock.getOrientation() == HORIZONTAL) {
-			if (dir == RIGHT) {
-				grabbedBlock.setFirstCol(grabbedBlock.getFirstCol() + 1);
-			} 
-			else if (dir == LEFT){
-				grabbedBlock.setFirstCol(grabbedBlock.getFirstCol() - 1);
-				
-			}
-		}
-		else if (grabbedBlock.getOrientation() == VERTICAL) {
-				if (dir == DOWN) {
-					grabbedBlock.setFirstRow(grabbedBlock.getFirstRow() - 1);
-				} 
-				else if (dir == UP){
-					grabbedBlock.setFirstRow(grabbedBlock.getFirstRow() + 1);
-							
-				}
-		
-			}
-		
-		}
+	public void moveGrabbedBlock(Direction dir) { // move the block, adds to move count and arraylist that tracks moves with move objects
+	    if (grabbedBlock == null || isGameOver()) {
+	        return;
+	    }
+
+	    int newFirstRow = grabbedBlock.getFirstRow();
+	    int newFirstCol = grabbedBlock.getFirstCol();
+	    
+
+	    if (grabbedBlock.getOrientation() == HORIZONTAL) {
+	        if (dir == RIGHT) {
+	            newFirstCol++;
+	        } else if (dir == LEFT) {
+	            newFirstCol--;
+	        }
+	    } else if (grabbedBlock.getOrientation() == VERTICAL) {
+	        if (dir == DOWN) {
+	            newFirstRow++;
+	        } else if (dir == UP) {
+	            newFirstRow--;
+	        }
+	    }
+
+	    if (canPlaceBlock(newFirstRow, newFirstCol)) {
+	       
+	        grabbedBlock.setFirstRow(newFirstRow);
+	        grabbedBlock.setFirstCol(newFirstCol);
+
+	       
+	        moveHistory.add(new Move(grabbedBlock, dir));
+	        moveCount++;
+	    }
 	
+
+	        grabbedRow = newFirstRow;
+	        grabbedCol = newFirstCol;
+	        moveHistory.add(new Move(grabbedBlock, dir));
+	        moveCount++;
+	    }
+	
+
+	
+
+
+
 
 	/**
 	 * Resets the state of the game back to the start, which includes the move
@@ -310,12 +343,13 @@ public class Board {
 	 * their setBlock method to either set a block if one is located over the cell
 	 * or set null if no block is located over the cell.
 	 */
-	public void reset() {
+	public void reset() { // resets the board
 		moveCount = 0;
 		moveHistory.clear();
 		for (int i = 0; i < grid.length; i++) {
 			for (int j = 0; j < grid[i].length; j++)
-				grid[i][j].setBlock(null);;
+				grid[i][j].setBlock(null);
+			;
 		}
 		for (Block block : blocks) {
 			block.reset();
@@ -344,8 +378,8 @@ public class Board {
 	 * current board. If the game is over there are no legal moves.
 	 * 
 	 * @return a list of legal moves
-	 */
-	public ArrayList<Move> getAllPossibleMoves() {
+	 */ 
+	public ArrayList<Move> getAllPossibleMoves() { // adds to arrayList of possible moves and if the game is over returns the list
 		ArrayList<Move> possibleMoves = new ArrayList<>();
 		if (isGameOver()) {
 			return possibleMoves;
@@ -353,23 +387,28 @@ public class Board {
 		for (Block block : blocks) {
 			int row = block.getFirstRow();
 			int col = block.getFirstCol();
+
 			if (block.getOrientation() == HORIZONTAL) {
 				if (canPlaceBlock(row, col - 1)) {
+
 					possibleMoves.add(new Move(block, LEFT));
 				}
-				if (canPlaceBlock(row, col + 1)) {
+				if (canPlaceBlock(row, col + block.getLength())) {
+
 					possibleMoves.add(new Move(block, RIGHT));
-				} else if (block.getOrientation() == VERTICAL) {
-					if (canPlaceBlock(row - 1, col)) {
-						possibleMoves.add(new Move(block, UP));
-					}
-					if (canPlaceBlock(row + 1, col)) {
-						possibleMoves.add(new Move(block, DOWN));
-					}
+				}
+			}
+			if (block.getOrientation() == VERTICAL) {
+				if (canPlaceBlock(row - 1, col)) {
+
+					possibleMoves.add(new Move(block, UP));
+				}
+				if (canPlaceBlock(row + block.getLength(), col)) {
+
+					possibleMoves.add(new Move(block, DOWN));
 				}
 			}
 		}
-
 		return possibleMoves;
 	}
 
@@ -401,8 +440,8 @@ public class Board {
 	 * </ul>
 	 * If the moveHistory list is empty this method does nothing.
 	 */
-	public void undoMove() {
-		// TODO
+	public void undoMove() { // de increments the move count when called
+		moveCount--;
 	}
 
 	@Override
@@ -422,4 +461,5 @@ public class Board {
 		}
 		return buff.toString();
 	}
+
 }
