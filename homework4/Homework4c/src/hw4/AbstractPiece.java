@@ -29,6 +29,7 @@ public abstract class AbstractPiece implements Piece
    */
   public AbstractPiece(Position position)
   {
+	  
     this.position = position;
   }
 
@@ -102,7 +103,7 @@ public abstract class AbstractPiece implements Piece
   public void shiftLeft()
   {
     position = new Position(position.row(), position.col() - 1);
-    setCells(cells); // Recalculate cells based on the new position
+    setCells(cells); 
   }
 
   /**
@@ -111,7 +112,7 @@ public abstract class AbstractPiece implements Piece
   public void shiftRight()
   {
     position = new Position(position.row(), position.col() + 1);
-    setCells(cells); // Recalculate cells based on the new position
+    setCells(cells);
   }
 
   /**
@@ -151,8 +152,6 @@ public abstract class AbstractPiece implements Piece
     {
       AbstractPiece s = (AbstractPiece) super.clone();
 
-      // make it into a deep copy (note there is no need to copy the position,
-      // since Position is immutable)
       s.cells = new Cell[cells.length];
       for (int i = 0; i < cells.length; ++i) {
         s.cells[i] = new Cell(cells[i]);
@@ -161,7 +160,7 @@ public abstract class AbstractPiece implements Piece
     }
     catch (CloneNotSupportedException e)
     {
-      // can't happen
+      // needed or will error 
       return null;
     }
   }

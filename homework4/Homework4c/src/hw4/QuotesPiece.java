@@ -7,94 +7,44 @@ import api.Piece;
 
 public class QuotesPiece extends AbstractPiece {    
     
-    private Cell[] cells;
-
-    // Updated constructor
+    // Constructor to initialize position and icons
     public QuotesPiece(Position position, Icon[] icons) {
         super(position);
+        if (icons.length != 4) {
+            throw new IllegalArgumentException();
+        }
         cells = new Cell[icons.length];
         for (int i = 0; i < icons.length; i++) {
-            cells[i] = new Cell(icons[i], new Position(0, 0)); // Initialize with default positions
+            cells[i] = new Cell(icons[i], new Position(0, 0)); 
         }
         initializeCells();
     }
 
-    // Method to initialize cells' positions to form a specific shape
+    
     private void initializeCells() {
-        cells[0].setPosition(new Position(0, 0)); // Example position
-        cells[1].setPosition(new Position(0, 1)); // Example position
-        // Adjust these positions as needed to form the desired shape
-    }
-
-    @Override
-    public Piece clone() {
-        QuotesPiece cloned = (QuotesPiece) super.clone();
-        cloned.cells = new Cell[cells.length];
-        for (int i = 0; i < cells.length; ++i) {
-            cloned.cells[i] = new Cell(cells[i]);
-        }
-        return cloned;
-    }
-
-    @Override
-    public Position getPosition() {
-        return position;
-    }
-
-    @Override
-    public Cell[] getCells() {
-        Cell[] copy = new Cell[cells.length];
-        for (int i = 0; i < cells.length; ++i) {
-            copy[i] = new Cell(cells[i]);
-        }
-        return copy;
-    }
-
-    @Override
-    public Cell[] getCellsAbsolute() {
-        Cell[] absoluteCells = new Cell[cells.length];
-        for (int i = 0; i < cells.length; i++) {
-            absoluteCells[i] = new Cell(cells[i]);
-            absoluteCells[i].setPosition(new Position(
-                cells[i].getRow() + position.row(),
-                cells[i].getCol() + position.col()
-            ));
-        }
-        return absoluteCells;
-    }
-
-    @Override
-    public void setCells(Cell[] givenCells) {
-        cells = new Cell[givenCells.length];
-        for (int i = 0; i < givenCells.length; ++i) {
-            cells[i] = new Cell(givenCells[i]);
-        }
-    }
-
-    @Override
-    public void shiftDown() {
-        position = new Position(position.row() + 1, position.col());
-    }
-
-    @Override
-    public void shiftLeft() {
-        position = new Position(position.row(), position.col() - 1);
-    }
-
-    @Override
-    public void shiftRight() {
-        position = new Position(position.row(), position.col() + 1);
+        cells[0].setPosition(new Position(0, 0)); 
+        cells[1].setPosition(new Position(1, 0)); 
+        cells[2].setPosition(new Position(0, 2)); 
+        cells[3].setPosition(new Position(1, 2)); 
     }
 
     @Override
     public void cycle() {
         if (cells.length > 1) {
-            Cell temp = cells[0];
-            for (int i = 0; i < cells.length - 1; ++i) {
-                cells[i] = cells[i + 1];
+            Icon tempIcon = cells[cells.length - 1].getIcon(); // stores last icon
+            for (int i = cells.length - 1; i > 0; i--) { //shifts icon
+                cells[i].setIcon(cells[i - 1].getIcon());
             }
-            cells[cells.length - 1] = temp;
+            cells[0].setIcon(tempIcon); // sets icon of first cell to last saved icon
         }
     }
 
+    @Override
+    public void transform() { 
+        for (Cell cell : cells) {
+            int row = cell.getRow();
+            int col = cell.getCol();
+            cell.setPosition(new Position(col, 2 - row));
+        }
+    }
 }

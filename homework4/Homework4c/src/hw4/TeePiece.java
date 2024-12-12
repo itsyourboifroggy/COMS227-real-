@@ -9,19 +9,22 @@ public class TeePiece extends AbstractPiece {
     // Constructor to initialize position and icons
     public TeePiece(Position position, Icon[] icons) {
         super(position);
+        if (icons.length != 4) {
+        	throw new IllegalArgumentException();
+        }
         cells = new Cell[icons.length];
         for (int i = 0; i < icons.length; i++) {
-            cells[i] = new Cell(icons[i], new Position(0, 0)); // Initialize with default positions
+            cells[i] = new Cell(icons[i], new Position(0, 0)); 
         }
         initializeCells();
     }
 
     // Initialize cells' positions to form the T shape
     private void initializeCells() {
-        cells[0].setPosition(new Position(0, 0)); // Center of the T
-        cells[1].setPosition(new Position(1, 0)); // Bottom-center of the T
-        cells[2].setPosition(new Position(1, 1)); // Left-center of the T
-        cells[3].setPosition(new Position(2, 0)); // Right-center of the T
+        cells[0].setPosition(new Position(0, 0)); 
+        cells[1].setPosition(new Position(1, 0));
+        cells[2].setPosition(new Position(1, 1)); 
+        cells[3].setPosition(new Position(2, 0)); 
     }
 
     @Override
@@ -29,10 +32,7 @@ public class TeePiece extends AbstractPiece {
         return position;
     }
 
-    @Override
-    public Cell[] getCells() {
-        return cells;
-    }
+   
 
     @Override
     public Cell[] getCellsAbsolute() {
@@ -50,13 +50,25 @@ public class TeePiece extends AbstractPiece {
     @Override
     public void cycle() {
         if (cells.length > 1) {
-            Icon tempIcon = cells[0].getIcon();
-            for (int i = 0; i < cells.length - 1; ++i) {
-                cells[i].setIcon(cells[i + 1].getIcon());
+            Icon tempIcon = cells[cells.length - 1].getIcon();
+            for (int i = cells.length - 1; i > 0; i--) {
+                cells[i].setIcon(cells[i - 1].getIcon());
             }
-            cells[cells.length - 1].setIcon(tempIcon);
+            cells[0].setIcon(tempIcon);
         }
     }
+
+    @Override
+    public Cell[] getCells() {
+        Cell[] copy = new Cell[cells.length];
+        for (int i = 0; i < cells.length; ++i) {
+            Position pos = new Position(cells[i].getRow(), cells[i].getCol());
+            copy[i] = new Cell(cells[i].getIcon(), pos);
+        }
+        return copy;
+    }
+
+
 
     @Override
     public TeePiece clone() {
